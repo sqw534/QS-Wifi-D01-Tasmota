@@ -1,0 +1,168 @@
+>D
+sw=0
+tmp=0
+tmp1=0
+cnt=0
+tmr=0
+hold=0
+pwrt=0
+slider=0
+fad=1
+fadin=0
+fadout=0
+dim=""
+sprl=2
+spru=10
+dimdir=0
+dimmlp=2.2
+dimstp=2
+dimll=10
+dimul=95
+dimv=30
+dimfin=10
+dimfout=50
+
+>B
+=>print >v1.2 <
+=>Counter1 0
+=>Baudrate 9600
+=#sdim(dimv)
+delay(1000)
+=#sdim(0)
+
+>F
+cnt=pc[1]
+if chg[cnt]>0
+then sw=1
+else sw=0
+endif
+tmr+=1
+if sw==0
+and tmr>sprl
+and tmr<spru
+then
+pwrt^=1
+if pwrt==1
+then
+if fad==1
+then
+fadin=1
+else
+=#sdim(dimv)
+endif
+else
+if fad==1
+then
+fadout=1
+dimfout=dimv
+else
+=#sdim(0)
+endif
+endif
+endif
+if fadin==1
+then 
+=#fader(dimv)
+endif 
+if fadout==1
+then 
+=#fader(0)
+endif
+if sw>0
+then
+if hold==0
+then
+dimdir^=1
+endif
+if tmr>spru
+then
+hold=1
+if pwrt>0
+then
+if dimdir>0
+then
+dimv+=dimstp
+if dimv>dimul
+then
+dimv=dimul
+endif
+=#sdim(dimv)
+else
+dimv-=dimstp
+if dimv<dimll
+then
+dimv=dimll
+endif
+=#sdim(dimv)
+endif
+else
+dimv=dimll
+=#sdim(dimv)
+pwrt=1
+dimdir=1
+delay(2000)
+endif
+endif
+else
+tmr=0
+hold=0
+endif
+>E
+slider=Dimmer
+if chg[slider]>0
+then
+if slider>0
+then
+dimv=slider
+else
+pwrt=0
+endif
+endif
+if pwr[1]==1
+then
+pwrt=1
+=#sdim(dimv)
+else
+pwrt=0
+=#sdim(0)
+endif
+#sdim(tmp)
+if tmp<10
+and tmp>0
+then
+dim="FF55"+hn(dimll*dimmlp)+"05DC0A"
+else
+dim="FF55"+hn(tmp*dimmlp)+"05DC0A"
+endif
+->SerialSend5 %dim%
+=>Dimmer %tmp%
+#
+#fader(tmp1)
+if tmp1>0
+then
+if dimfin<tmp1
+then
+dimfin+=1
+if dimfin>=dimv
+then
+dimfin=dimv
+fadin=0
+=#sdim(dimv)
+endif
+=#sdim(dimfin)
+else
+dimfin=10
+endif
+else
+if dimfout>dimll
+then
+dimfout-=2
+if dimfout<=dimll
+then
+dimfout=0
+fadout=0
+endif
+=#sdim(dimfout)
+endif
+endif
+#
